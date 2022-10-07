@@ -67,21 +67,26 @@ def get_session() -> str:
         return session
 
     # Check if we're already logged in
-    proc_logged = subprocess.run(['bw', 'login', '--check', '--quiet'], check=True)
+    proc_logged = subprocess.run(['bw', 'login', '--check', '--quiet'])
 
     if proc_logged.returncode:
         logging.debug('Not logged into Bitwarden')
-        operation = 'login'
+        proc_login = subprocess.run(
+            ['bw', operation, '--apikey'],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+            check=True,
+        )
     else:
         logging.debug('Bitwarden vault is locked')
-        operation = 'unlock'
 
     proc_session = subprocess.run(
-        ['bw', '--raw', operation],
+        ['bw', '--raw', 'unlock', '--passwordenv', 'BW_PASSWORD'],
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
     )
+
     session = proc_session.stdout
     logging.info(
         'To re-use this BitWarden session run: export BW_SESSION="%s"',
